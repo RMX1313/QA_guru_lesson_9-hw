@@ -2,7 +2,7 @@ from selene import browser, be, have
 
 from pages.registration_page import RegistrationPage
 
-
+MIDDLE
 def test_fill_form():
     registration_page = RegistrationPage()
     registration_page.open()
