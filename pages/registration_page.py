@@ -1,88 +1,80 @@
 from selene import browser, have, be, by
 import os
 
+from selene import browser, have, be, by
+from users import User
+
+
 class RegistrationPage:
+    def __init__(self):
+        self.first_name = browser.element('[id="firstName"]')
+        self.last_name = browser.element('[id="lastName"]')
+        self.user_email = browser.element('[id="userEmail"]')
+        self.user_gender = browser.element('#genterWrapper')
+        self.user_phone_nuber = browser.element('[id="userNumber"]')
+        self.date_of_birth = browser.element('[id = "dateOfBirthInput"]')
+        self.month_of_birth = browser.all('.react-datepicker__month-select option')
+        self.year_of_birth = browser.all('.react-datepicker__year-select option')
+        self.day_of_birth = browser.all('.react-datepicker__day:not(.react-datepicker__day--outside-month)')
+        self.subject_enter = browser.element('[id="subjectsInput"]')
+        self.subject_type = browser.element('#subjectsInput')
+        self.subject_click = browser.all('.subjects-auto-complete__menu div')
+        self.user_hobby = browser.element('#hobbiesWrapper')
+        self.user_picture = browser.element('[id="uploadPicture"]')
+        self.user_address = browser.element('[id="currentAddress"]')
+        self.user_state = browser.element('#state input')
+        self.user_city = browser.element('#city input')
+        self.submit_button = browser.element('[id="submit"]')
+        self.result_table = browser.all('tbody tr td:nth-child(2)')
+
+
     def open(self):
         browser.open('https://demoqa.com/automation-practice-form')
-        return self
-
-    def fill_first_name(self, value):
-        browser.element('#firstName').type(value)
-        return self
-
-    def fill_last_name(self, value):
-        browser.element('#lastName').type(value)
+        browser.execute_script('window.scrollBy(0, 500)')
         return self
 
     def fill_birthday(self, month, year, day):
-        browser.element('#dateOfBirthInput').click()
-        browser.all('.react-datepicker__month-select option').element_by(have.exact_text(month)).click()
-        browser.all('.react-datepicker__year-select option').element_by(have.exact_text(year)).click()
-        browser.element(f'.react-datepicker__day--0{day}').click()
+        self.date_of_birth.click()
+        self.month_of_birth.element_by(have.exact_text(month)).click()
+        self.year_of_birth.element_by(have.exact_text(year)).click()
+        self.day_of_birth.element_by(have.exact_text(str(int(day)))).click()
         return self
 
-    def fill_email(self, email):
-        browser.element('#userEmail').type(email)
-        return self
-
-    def set_gender(self, value):
-        browser.all('[name=gender]').element_by(have.value('Male')).element('..').click()
-        return self
-
-    def fill_phone_number(self, value):
-        browser.element('#userNumber').should(be.blank).type(value)
-        return self
-
-    def set_subject_by_enter(self, value):
-        browser.element('#subjectsInput').type(value).press_enter()
-        return self
-
-
-
-    def set_hobby(self, value):
-        browser.all('.custom-checkbox').element_by(have.exact_text('Sports')).click()
-        return self
-
-    def upload_picture(self, value):
-        file_path = os.path.join(os.path.dirname(__file__), 'file.txt')
-        browser.element('#uploadPicture').send_keys(file_path)
-        return self
-
-    def fill_current_address(self, value):
-        browser.element('[id="currentAddress"]').set_value(value)
+    def set_subject_by_click(self, type_letter, value):
+        self.subject_type.type(type_letter)
+        self.subject_click.element_by(have.exact_text(value)).click()
         return self
 
     def choose_location(self, state, city):
-        browser.element('#state input').type(state).press_enter()
-        browser.element('#city input').type(city).press_enter()
+        self.user_state.type(state).press_enter()
+        self.user_city.type(city).press_enter()
         return self
 
-    def submit_form(self):
-        browser.element('[id="submit"]').click()
+    def should_have_registered(self,user: User):
+        self.result_table.should(have.exact_texts(
+            user.full_name,
+            user.email,
+            user.gender,
+            user.phone_number,
+            user.date_of_birth,
+            user.subjects,
+            user.hobby,
+            user.file_name,
+            user.address,
+            user.state_city
+        ))
         return self
 
-    def should_have_registered_user_with(self,
-                                   full_name,
-                                   email,
-                                   gender,
-                                   phone_number,
-                                   birthday,
-                                   subjects,
-                                   hobby,
-                                   file_name,
-                                   address,
-                                   state_city):
-        (browser.all('.table-responsive td:nth-child(2)')
-        .should(have.exact_texts(
-            full_name,
-            email,
-            gender,
-            phone_number,
-            birthday,
-            subjects,
-            hobby,
-            file_name,
-            address,
-            state_city
-        )))
-        return self
+    def register(self, user: User):
+        self.first_name.type(user.first_name)
+        self.last_name.type(user.last_name)
+        self.user_email.type(user.email)
+        self.user_gender.element(by.text(user.gender)).click()
+        self.user_phone_nuber.type(user.phone_number)
+        self.fill_birthday(*user.birthday)
+        self.subject_enter.type(user.first_subject).press_enter()
+        self.user_hobby.element(by.text(user.hobby)).click()
+        self.user_picture.send_keys(os.path.join(os.path.dirname(__file__), 'file.txt'))
+        self.user_address.set_value(user.address)
+        self.choose_location(*user.user_location)
+        self.submit_button.click()
